@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.high.mapper.UserMapper">
+	<!-- User的resultMap,column是给数据库列起的别名,它对应property类的属性 -->
+	<resultMap id="result_User_Map" type="com.high.entity.User">
+		<result column="id" property="id" />
+		<result column="dept_id" property="deptId" />
+		<result column="username" property="username" />
+		<result column="password" property="password" />
+		<result column="phone" property="phone" />
+		<result column="email" property="email" />
+		<result column="nick_name" property="nickName" />
+		<result column="online_status" property="onlineStatus" />
+		<result column="avatar" property="avatar" />
+		<result column="status" property="status" />
+		<result column="wx_open_id" property="wxOpenId" />
+		<result column="qq_open_id" property="qqOpenId" />
+		<result column="create_time" property="createTime" />
+		<result column="update_time" property="updateTime" />
+	</resultMap>
+
+	<!-- 数据库中表名为:user的列名 -->
+	<sql id="user_Column">
+		id,dept_id,username,password,phone,email,nick_name,online_status,avatar,status,wx_open_id,qq_open_id,create_time,update_time
+	</sql>
+
+	<select id="loadUserByUsername" parameterType="java.lang.String" resultMap="result_User_Map">
+		select
+		<include refid="user_Column"/>
+		from user where username = #{username}
+	</select>
+
+</mapper>

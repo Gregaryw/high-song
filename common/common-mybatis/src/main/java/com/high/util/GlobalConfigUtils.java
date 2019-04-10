@@ -1,0 +1,140 @@
+package com.high.util;
+
+import com.high.config.GlobalConfig;
+import com.high.core.enums.DbType;
+import com.high.core.enums.IdType;
+import com.high.core.incrementer.IKeyGenerator;
+import com.high.core.injector.DefaultSqlInjector;
+import com.high.core.injector.ISqlInjector;
+import com.high.core.metadata.TableInfo;
+import com.high.core.toolkit.TableInfoHelper;
+import com.high.handlers.MetaObjectHandler;
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.logging.LogFactory;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.springframework.util.Assert;
+import org.springframework.util.ClassUtils;
+
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Mybatis全局缓存工具类
+ *
+ * @author Caratacus
+ * @since 2017-06-15
+ */
+public class GlobalConfigUtils {
+    /**
+     * 日志
+     */
+    private static final Log logger = LogFactory.getLog(GlobalConfigUtils.class);
+
+    /**
+     * 缓存全局信息
+     */
+    private static final Map<String, GlobalConfig> GLOBAL_CONFIG = new ConcurrentHashMap<>();
+
+    /**
+     * 获取当前的SqlSessionFactory
+     *
+     * @param clazz 实体类
+     */
+    public static SqlSessionFactory currentSessionFactory(Class<?> clazz) {
+        TableInfo tableInfo = TableInfoHelper.getTableInfo(clazz);
+        Assert.notNull(tableInfo, ClassUtils.getUserClass(clazz).getName() + " Not Found TableInfoCache.");
+        String configMark = tableInfo.getConfigMark();
+        GlobalConfig mybatisGlobalConfig = getGlobalConfig(configMark);
+        return mybatisGlobalConfig.getSqlSessionFactory();
+    }
+
+    /**
+     * 获取默认 MybatisGlobalConfig
+     * <p>FIXME 这可能是一个伪装成单例模式的原型模式，暂时不确定</p>
+     */
+    public static GlobalConfig defaults() {
+        return new GlobalConfig().setDbConfig(new GlobalConfig.DbConfig());
+    }
+
+    /**
+     * 设置全局设置(以configuration地址值作为Key)
+     *
+     * @param configuration       Mybatis 容器配置对象
+     * @param mybatisGlobalConfig 全局配置
+     */
+    public static void setGlobalConfig(Configuration configuration, GlobalConfig mybatisGlobalConfig) {
+        Assert.isTrue(configuration != null && mybatisGlobalConfig != null,
+                "Error: Could not setGlobalConfig !");
+        // 设置全局设置
+        GLOBAL_CONFIG.put(configuration.toString(), mybatisGlobalConfig);
+    }
+
+    /**
+     * 获取MybatisGlobalConfig (统一所有入口)
+     *
+     * @param configuration Mybatis 容器配置对象
+     */
+    public static GlobalConfig getGlobalConfig(Configuration configuration) {
+        Assert.notNull(configuration, "Error: You need Initialize MybatisConfiguration !");
+        return getGlobalConfig(configuration.toString());
+    }
+
+    /**
+     * 获取MybatisGlobalConfig (统一所有入口)
+     *
+     * @param configMark 配置标记
+     */
+    public static GlobalConfig getGlobalConfig(String configMark) {
+        GlobalConfig cache = GLOBAL_CONFIG.get(configMark);
+        if (cache == null) {
+            // 没有获取全局配置初始全局配置
+            logger.debug("DeBug: MyBatis Plus Global configuration Initializing !");
+            GlobalConfig globalConfig = defaults();
+            GLOBAL_CONFIG.put(configMark, globalConfig);
+            return globalConfig;
+        }
+        return cache;
+    }
+
+    public static DbType getDbType(Configuration configuration) {
+        return getGlobalConfig(configuration).getDbConfig().getDbType();
+    }
+
+    public static IKeyGenerator getKeyGenerator(Configuration configuration) {
+        return getGlobalConfig(configuration).getDbConfig().getKeyGenerator();
+    }
+
+    public static IdType getIdType(Configuration configuration) {
+        return getGlobalConfig(configuration).getDbConfig().getIdType();
+    }
+
+    public static boolean isMapUnderscoreToCamelCase(Configuration configuration) {
+        return configuration.isMapUnderscoreToCamelCase();
+    }
+
+    public static ISqlInjector getSqlInjector(Configuration configuration) {
+        // fix #140
+        GlobalConfig globalConfiguration = getGlobalConfig(configuration);
+        ISqlInjector sqlInjector = globalConfiguration.getSqlInjector();
+        if (sqlInjector == null) {
+            sqlInjector = new DefaultSqlInjector();
+            globalConfiguration.setSqlInjector(sqlInjector);
+        }
+        return sqlInjector;
+    }
+
+    public static MetaObjectHandler getMetaObjectHandler(Configuration configuration) {
+        return getGlobalConfig(configuration).getMetaObjectHandler();
+    }
+
+    public static Class getSuperMapperClass(Configuration configuration) {
+        return getGlobalConfig(configuration).getSuperMapperClass();
+    }
+
+    public static Set<String> getMapperRegistryCache(Configuration configuration) {
+        return getGlobalConfig(configuration).getMapperRegistryCache();
+    }
+}
+

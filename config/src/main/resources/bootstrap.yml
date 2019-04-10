@@ -1,0 +1,19 @@
+#容器名称
+spring:
+  application:
+    name: high-song-config
+  profiles:
+    active: native
+  # 配置中心
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/config/
+
+# 暴露监控端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'

@@ -1,0 +1,12 @@
+#容器端口
+server:
+  port: 7070
+#日志配置
+logging:
+  level:
+    com.netflix.discovery: 'OFF'
+    org.springframework.cloud: 'DEBUG'
+
+
+
+
